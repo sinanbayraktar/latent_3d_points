@@ -194,7 +194,8 @@ class AutoEncoder(Neural_Net):
 
     def evaluate(self, in_data, configuration, ret_pre_augmentation=False):
         n_examples = in_data.num_examples
-        data_loss = 0.
+        # data_loss_avg = 0.
+        data_losses = []
         pre_aug = None
         if self.is_denoising:
             original_data, ids, feed_data = in_data.full_epoch_data(shuffle=False)
@@ -216,13 +217,16 @@ class AutoEncoder(Neural_Net):
                 reconstructions[i:i + b], loss = self.reconstruct(feed_data[i:i + b])
 
             # Compute average loss
-            data_loss += (loss * len(reconstructions[i:i + b]))
-        data_loss /= float(n_examples)
+            data_loss = (loss * len(reconstructions[i:i + b]))
+            data_losses.append(data_loss)
+            # data_loss_avg += data_loss
+        # data_loss_avg /= float(n_examples)
+        data_losses_array = np.array(data_losses)
 
         if pre_aug is not None:
-            return reconstructions, data_loss, np.squeeze(feed_data), ids, np.squeeze(original_data), pre_aug
+            return reconstructions, data_losses_array, np.squeeze(feed_data), ids, np.squeeze(original_data), pre_aug
         else:
-            return reconstructions, data_loss, np.squeeze(feed_data), ids, np.squeeze(original_data)
+            return reconstructions, data_losses_array, np.squeeze(feed_data), ids, np.squeeze(original_data)
         
     def embedding_at_tensor(self, dataset, conf, feed_original=True, apply_augmentation=False, tensor_name='bottleneck'):
         '''
